@@ -38,7 +38,7 @@ peoplepresent=[] 			# list of people found
 timestamp=[] 				# list timestamps that lists when people are found or when they leave
 timelimit="0:01:00:000000" 	# time limit of when to remove someone from presence (the length of time someone can be gone before they can be reannounced)
 FROM = "bluebellsmtp@gmail.com"
-smtptolist = ['wolfebaine@gmail.com','07176122224@messaging.sprintpcs.com']
+smtptolist = []
 TO = ','.join(smtptolist)
 
 for row in csv.reader(open('NameList')): #import static list of known people
