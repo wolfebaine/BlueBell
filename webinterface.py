@@ -3,30 +3,20 @@
 import sys
 import hashlib
 import cyclone.web
-from django.conf import settings
-
-settings.configure(DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': 'BlueBell.db'
-    }
-})
-
-from django.db import models
-from django.core import exceptions
+import peewee
 from twisted.python import log
 from twisted.internet import defer, reactor
 
+database = peewee.Database(peewee.SqliteAdapter(), 'BlueBell.db')
 
-
-class Webuser(models.Model):
-    id = models.AutoField(primary_key=True)
-    username = models.CharField(unique=True)
-    salt = models.CharField()
-    hash = models.CharField()
+class Webuser(peewee.Model):
+    id = peewee.PrimaryKeyField()
+    username = peewee.CharField()
+    salt = peewee.CharField()
+    hash = peewee.CharField()
     class Meta:
         db_table = 'webusers'
-        app_label = 'BlueBell'
+        database = database
 
 class BaseHandler(cyclone.web.RequestHandler):
     def get_current_user(self):
@@ -52,8 +42,8 @@ class LoginHandler(BaseHandler):
     def post(self):
         u, p = self.get_argument("u"), self.get_argument("p")
         try:
-            user = Webuser.objects.get(username=u)
-        except Webuser.DoesNotExist:
+            user = Webuser.get(username=u)
+        except StopIteration:
             self.redirect("/auth/login?e=invalid")
         else:
             hash_to_test = hashlib.sha256(p + user.salt).hexdigest()
@@ -83,6 +73,7 @@ class Application(cyclone.web.Application):
         cyclone.web.Application.__init__(self, handlers, **settings)
 
 def main(port):
+    database.connect()
     reactor.listenTCP(port, Application())
     reactor.run()
 
