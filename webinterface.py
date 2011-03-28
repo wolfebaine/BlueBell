@@ -13,7 +13,7 @@ class Webuser(peewee.Model):
     id = peewee.PrimaryKeyField()
     username = peewee.CharField()
     salt = peewee.CharField()
-    hash = peewee.CharField()
+    pwhash = peewee.CharField()
     class Meta:
         db_table = 'webusers'
         database = database
@@ -41,17 +41,19 @@ class LoginHandler(BaseHandler):
 
     def post(self):
         u, p = self.get_argument("u"), self.get_argument("p")
+        database.connect()
         try:
             user = Webuser.get(username=u)
         except StopIteration:
             self.redirect("/auth/login?e=invalid")
         else:
-            hash_to_test = hashlib.sha256(p + user.salt).hexdigest()
-            if hash_to_test == user.hash:
+            pwhash_to_test = hashlib.sha256(p + user.salt).hexdigest()
+            if pwhash_to_test == user.pwhash:
                 self.set_secure_cookie("user", str(user.username))
                 self.redirect("/")
             else:
                 self.redirect("/auth/login?e=invalid")
+        database.close()
 
 class LogoutHandler(BaseHandler):
     @cyclone.web.authenticated
@@ -73,7 +75,6 @@ class Application(cyclone.web.Application):
         cyclone.web.Application.__init__(self, handlers, **settings)
 
 def main(port):
-    database.connect()
     reactor.listenTCP(port, Application())
     reactor.run()
 
