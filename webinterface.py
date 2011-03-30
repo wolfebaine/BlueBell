@@ -30,14 +30,7 @@ class MainHandler(BaseHandler):
 class LoginHandler(BaseHandler):
     def get(self):
         err = self.get_argument("e", None)
-        self.write("""
-            <html><body><form action="/auth/login" method="post">
-            username: <input type="text" name="u"><br>
-            password: <input type="password" name="p"><br>
-            <input type="submit" value="sign in"><br>
-            %s
-            </body></html>
-        """ % (err == "invalid" and "invalid username or password" or ""))
+        self.render('login_form.html', error_text=((err == "invalid") and "invalid username or password" or ""))
 
     def post(self):
         u, p = self.get_argument("u"), self.get_argument("p")
@@ -69,6 +62,8 @@ class Application(cyclone.web.Application):
             (r"/auth/logout", LogoutHandler),
         ]
         settings = dict(
+            static_path='./web/static',
+            template_path='./web/templates',
             login_url="/auth/login",
             cookie_secret="32oETzKXQAGaYdkL5gEmGeJJFuYh7EQnp2XdTP1o/Vo=",
         )
