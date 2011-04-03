@@ -8,20 +8,20 @@ import datetime
 import smtplib
 import string
 import select
-
+from pprint import pprint
 
 class MyDiscoverer (bluetooth.DeviceDiscoverer) :
     def pre_inquiry (self):
         self.done = False
     def device_discovered(self, address, device_class, name):
-        # print "%s - %s" % (address , name)
+        print "%s - %s" % (address , name)
         if address not in self.discovered_list:
             self.discovered_list.append(address)
     def inquiry_complete(self):
         self.done = True
     def discover_my_devices(self):
         self.discovered_list = []
-        self.find_devices(lookup_names = False, duration=5)
+        self.find_devices(lookup_names = False, duration=15)
         while True:
             can_read, can_write, has_exc = select.select ([self ], [ ], [ ]) 
             if self in can_read:                             
@@ -37,8 +37,8 @@ presence={} 				# dictionary of people who have already been announced and when 
 peoplepresent=[] 			# list of people found
 timestamp=[] 				# list timestamps that lists when people are found or when they leave
 timelimit="0:01:00:000000" 	# time limit of when to remove someone from presence (the length of time someone can be gone before they can be reannounced)
-FROM = "bluebellsmtp@gmail.com"
-smtptolist = []
+FROM = "#"
+smtptolist = ['#','#']
 TO = ','.join(smtptolist)
 
 for row in csv.reader(open('NameList')): #import static list of known people
@@ -47,6 +47,7 @@ for row in csv.reader(open('NameList')): #import static list of known people
 for row in csv.reader(open('OwnerList')): #import static list of owners
 	ownerdata[row[0]] = row[1:]
 
+log = open("log.txt", "a")
 
 print "Device List Loaded."
 print
@@ -61,9 +62,18 @@ while(True):
 	
 	print "-------------"
 	print "DevicesFound: %s" %(str(devicesfound), )
-	print "Presence Dictionary: %s" %(str(presence), )
-	print "GhostList: %s" % (str(ghostlist), )
+	#print "Presence Dictionary: %s" %(str(presence), )
+	#print "GhostList: %s" % (str(ghostlist), )
+	pprint('Presence Dictionary: %s' %(presence))
+	pprint('Ghostlist: %s' %(ghostlist))
 	print "-------------"
+
+	log.write(str(snafu))
+	log.write('\n-------------\n')
+	log.write('DevicesFound: %s\n' %(str(devicesfound), ))
+	log.write('Presence Dictionary: %s\n' %(str(presence), ))
+	log.write('GhostList: %s\n' % (str(ghostlist), ))
+	log.write('-------------\n')
 
 	for personpresent in presence: 					# for every person that has recently been present
 		if personpresent in devicesfound: 			# if they are currently in the house
@@ -129,7 +139,7 @@ while(True):
 		server.ehlo()
 		server.starttls()
 		server.ehlo
-		server.login('bluebellsmtp@gmail.com', '9006345789')
+		server.login('#', '#')
 		server.set_debuglevel(1)
 		BODY = string.join((
 			"From: %s" % FROM,
@@ -141,15 +151,10 @@ while(True):
 		server.close()
 		announce = "Welcome " + announce + ".  "
 		completeannounce = announce + ownerannounce
-		completeannounce = completeannounce.replace(' ','%20')
-		#os.system('espeak -s125 -k30 -p65 -g1 -v mb-us1+f3 "%s" | /usr/bin/mbrola -e us1 - - | aplay -r16000 -fS16' % announce, )	#to use mbrola voices, use this line to announce
-		#os.system('espeak -s125 -k30 -p65 -g1 -v mb-us1+f3 "%s" | /usr/bin/mbrola -e us1 - - | aplay -r16000 -fS16' % ownerannounce, )	#to use mbrola voices, use this line to announce
-		#os.system('espeak -s160 -k20 -p60 -g5 -v en+m1 "%s"' % announce, )
-		#os.system('espeak -s160 -k20 -p60 -g5 -v en+m1 "%s"' % ownerannounce, )
-		#os.system('mplayer "http://translate.google.com/translate_tts?tl=en&q=%s"' % announce, )
-		#os.system('mplayer "http://translate.google.com/translate_tts?tl=en&q=%s"' % ownerannounce, )
-		os.system('btplay "http://translate.google.com/translate_tts?tl=en&q=%s"' % completeannounce, )
-		time.sleep(5)
+		#completeannounce = completeannounce.replace(' ','%20')
+		os.system('mplayer "http://translate.google.com/translate_tts?tl=en&q=%s"' % completeannounce, )
+		#os.system('btplay "http://translate.google.com/translate_tts?tl=en&q=%s"' % completeannounce, )
+		#time.sleep(5)
 		#os.system('btplay "http://translate.google.com/translate_tts?tl=en&q=%s"' % ownerannounce, )
 		#print announce
 		#print ownerannounce			
